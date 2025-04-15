@@ -1,14 +1,13 @@
-name: Analyzer Pipeline
+name: Analyzer Pipeline (Push Preview)
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
-      - main
+      - main   # Podés agregar más ramas de prueba si querés
+      - dev    # Por ejemplo, para probar sin tocar main
 
 jobs:
   preview-file-changes:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
