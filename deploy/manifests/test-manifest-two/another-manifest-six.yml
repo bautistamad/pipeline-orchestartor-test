@@ -1,3 +1,3 @@
 manifest:
   app: test
-  env: production
+  env: development
