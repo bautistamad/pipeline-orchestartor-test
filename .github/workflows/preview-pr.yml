@@ -1,0 +1,36 @@
+name: Preview PR Changes
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  preview-changes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch (main)
+        run: git fetch origin main
+
+      - name: Show diff against main
+        run: |
+          echo "📄 Cambios propuestos en el PR:"
+          git diff --name-status origin/main...HEAD -- deploy/manifests/test-manifest/ > changes.txt
+          cat changes.txt
+
+          echo ""
+          echo "✅ Clasificación:"
+          while IFS=$'\t' read -r status file; do
+            case "$status" in
+              A) echo "🆕 Agregado: $file" ;;
+              M) echo "✏️  Modificado: $file" ;;
+              D) echo "❌ Eliminado: $file" ;;
+              *) echo "❓ Otro cambio ($status): $file" ;;
+            esac
+          done < changes.txt

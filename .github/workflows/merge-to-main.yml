@@ -1,0 +1,48 @@
+name: Sync with S3 on Merge
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync-on-merge:
+    runs-on: ubuntu-latest
+
+    env:
+      BUCKET_NAME: x
+      S3_PREFIX: test-manifest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2  # Para poder acceder a HEAD~1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Show merged changes
+        run: |
+          echo "📦 Cambios introducidos por el último merge a main:"
+          git diff --name-status HEAD~1 -- deploy/manifests/test-manifest/ > changes.txt
+          cat changes.txt
+
+      - name: Sync with S3 (dry-run version)
+        run: |
+          echo "🌐 Simulando sincronización con S3 (a futuro podés activar esto):"
+          while IFS=$'\t' read -r status file; do
+            filename=$(basename "$file")
+            case "$status" in
+              D)
+                echo "🗑 Eliminar de S3: s3://$BUCKET_NAME/$S3_PREFIX/$filename"
+                ;;
+              M|A)
+                echo "⬆️ Subir a S3: $file → s3://$BUCKET_NAME/$S3_PREFIX/$filename"
+                ;;
+            esac
+          done < changes.txt
