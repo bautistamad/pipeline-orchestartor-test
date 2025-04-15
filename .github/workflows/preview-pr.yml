@@ -18,12 +18,11 @@ jobs:
       - name: Fetch base branch (main)
         run: git fetch origin main
 
-      - name: Show diff against main
+      - name: Detectar cambios dinámicamente en deploy/manifests/*
         run: |
+          git diff --name-status --no-renames origin/main...HEAD -- deploy/manifests/ > changes.txt
+
           echo "📄 Cambios propuestos en el PR:"
-
-          git diff --name-status --no-renames origin/main...HEAD -- deploy/manifests/test-manifest/ > changes.txt
-
           cat changes.txt
 
           echo ""
@@ -36,3 +35,8 @@ jobs:
               *) echo "❓ Otro cambio ($status): $file" ;;
             esac
           done < changes.txt
+
+          echo ""
+          echo "📁 Carpetas afectadas:"
+          cut -f2 changes.txt | awk -F'/' 'NF>=3 {print $1"/"$2"/"$3}' | sort -u > folders.txt
+          cat folders.txt

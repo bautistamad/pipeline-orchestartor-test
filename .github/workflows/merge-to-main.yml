@@ -26,14 +26,28 @@ jobs:
       #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       #     aws-region: us-east-1
 
-      - name: Show merged changes
+      - name: Detectar cambios dinámicamente en deploy/manifests/*
         run: |
-          echo "📦 Cambios introducidos por el último merge a main:"
+          git diff --name-status --no-renames HEAD~1 HEAD -- deploy/manifests/ > changes.txt
 
-          # Sin detección de renames para forzar add/delete en vez de rename
-          git diff --name-status --no-renames HEAD~1 -- deploy/manifests/test-manifest/ > changes.txt
-
+          echo "📄 Cambios aplicados en main:"
           cat changes.txt
+
+          echo ""
+          echo "✅ Clasificación:"
+          while IFS=$'\t' read -r status file; do
+            case "$status" in
+              A) echo "🆕 Agregado: $file" ;;
+              M) echo "✏️  Modificado: $file" ;;
+              D) echo "❌ Eliminado: $file" ;;
+              *) echo "❓ Otro cambio ($status): $file" ;;
+            esac
+          done < changes.txt
+
+          echo ""
+          echo "📁 Carpetas afectadas:"
+          cut -f2 changes.txt | awk -F'/' 'NF>=3 {print $1"/"$2"/"$3}' | sort -u > folders.txt
+          cat folders.txt
 
       - name: Simular sync con S3 (modo dry-run)
         run: |
