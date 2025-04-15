@@ -1,0 +1,9 @@
+# name: Analizer Pipeline
+
+# on:
+#   pull_request:
+#     branches:
+#       - main
+
+# jobs:
+#   compare-fi
