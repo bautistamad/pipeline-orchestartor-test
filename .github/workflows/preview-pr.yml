@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Necesario para comparar correctamente con origin/main
 
       - name: Fetch base branch (main)
         run: git fetch origin main
@@ -21,7 +21,9 @@ jobs:
       - name: Show diff against main
         run: |
           echo "📄 Cambios propuestos en el PR:"
-          git diff --name-status origin/main...HEAD -- deploy/manifests/test-manifest/ > changes.txt
+
+          git diff --name-status --no-renames origin/main...HEAD -- deploy/manifests/test-manifest/ > changes.txt
+
           cat changes.txt
 
           echo ""
