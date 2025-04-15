@@ -1,0 +1,3 @@
+manifest:
+  app: test
+  env: dev
