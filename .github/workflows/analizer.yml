@@ -1,9 +1,48 @@
-# name: Analizer Pipeline
+name: Analyzer Pipeline
 
-# on:
-#   pull_request:
-#     branches:
-#       - main
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
 
-# jobs:
-#   compare-fi
+jobs:
+  preview-file-changes:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main for comparison
+        run: |
+          git fetch origin main
+
+      - name: Detect changes in test-manifest files
+        run: |
+          echo "📄 Archivos modificados en 'deploy/manifests/test-manifest/' desde main:"
+          git diff --name-status origin/main...HEAD -- deploy/manifests/test-manifest/ > changes.txt
+
+          cat changes.txt
+
+          echo ""
+          echo "✅ Clasificación de cambios:"
+          while IFS=$'\t' read -r status file; do
+            case "$status" in
+              D)
+                echo "❌ Archivo eliminado: $file"
+                ;;
+              M)
+                echo "✏️  Archivo modificado: $file"
+                ;;
+              A)
+                echo "🆕 Archivo agregado: $file"
+                ;;
+              *)
+                echo "🔁 Otro cambio ($status): $file"
+                ;;
+            esac
+          done < changes.txt
