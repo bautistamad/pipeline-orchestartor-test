@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2  # Para poder acceder a HEAD~1
+          fetch-depth: 2  # Necesario para acceder a HEAD~1
 
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v2
@@ -29,12 +29,16 @@ jobs:
       - name: Show merged changes
         run: |
           echo "📦 Cambios introducidos por el último merge a main:"
-          git diff --name-status HEAD~1 -- deploy/manifests/test-manifest/ > changes.txt
+
+          # Sin detección de renames para forzar add/delete en vez de rename
+          git diff --name-status --no-renames HEAD~1 -- deploy/manifests/test-manifest/ > changes.txt
+
           cat changes.txt
 
-      - name: Sync with S3 (dry-run version)
+      - name: Simular sync con S3 (modo dry-run)
         run: |
-          echo "🌐 Simulando sincronización con S3 (a futuro podés activar esto):"
+          echo ""
+          echo "🌐 Simulando sincronización con S3:"
           while IFS=$'\t' read -r status file; do
             filename=$(basename "$file")
             case "$status" in
@@ -43,6 +47,9 @@ jobs:
                 ;;
               M|A)
                 echo "⬆️ Subir a S3: $file → s3://$BUCKET_NAME/$S3_PREFIX/$filename"
+                ;;
+              *)
+                echo "❓ Cambio no esperado ($status): $file"
                 ;;
             esac
           done < changes.txt
